@@ -761,6 +761,11 @@
             }
 
             // Caso 3: Fermo -> Avvia (con o senza ritardo)
+            startWithDelay();
+        });
+
+        // Avvia la riproduzione rispettando il ritardo iniziale (clessidra)
+        function startWithDelay() {
             const delaySeconds = parseInt(startDelayInput.value) || 0;
 
             if (delaySeconds > 0) {
@@ -768,7 +773,7 @@
             } else {
                 startPlayback();
             }
-        });
+        }
 
         function startCountdown(seconds) {
             initAudioContext(); // Pre-init audio context on click
@@ -817,29 +822,26 @@
 
         // Restart button
         restartButton.addEventListener('click', function () {
-            // Se c'è un countdown in corso, annullalo
-            if (isWaiting) {
-                clearTimeout(delayTimer);
-                isWaiting = false;
-                playButton.classList.remove('waiting');
-                releaseWakeLock();
-            }
+            // Annulla un eventuale countdown in corso
+            clearTimeout(delayTimer);
+            isWaiting = false;
 
+            // Ferma la riproduzione e riporta tutto all'inizio
+            audio.pause();
+            isPlaying = false;
             audio.currentTime = 0;
+            progressBar.style.width = '0%';
+            playButton.classList.remove('waiting', 'playing');
+            playButton.textContent = '▶';
+
             // Reset to base volume
             const maxIncrement = parseFloat(volumeIncrementInput.value) || 100;
             const baseVolume = 1.0 / (1 + maxIncrement / 100);
             audio.volume = baseVolume;
             updateVolumeMeter(100, baseVolume);
 
-            if (!isPlaying) {
-                audio.play();
-                isPlaying = true;
-                playButton.textContent = '⏸';
-                playButton.classList.add('playing');
-            }
-
-            status.textContent = 'Ricominciato da capo';
+            // Riparte con lo stesso ritardo iniziale del tasto play
+            startWithDelay();
         });
 
         // Click on progress bar to seek
